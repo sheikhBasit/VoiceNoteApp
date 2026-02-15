@@ -21,12 +21,19 @@ class AuthViewModel(private val authApi: AuthApi) : ViewModel() {
     private val _state = MutableStateFlow<AuthState>(AuthState.Idle)
     val state: StateFlow<AuthState> = _state
 
-    fun syncDevice(email: String, deviceId: String, deviceName: String) {
+    fun syncDevice(
+        email: String, 
+        deviceId: String, 
+        deviceModel: String, 
+        token: String,
+        password: String? = null,
+        timezone: String? = "UTC"
+    ) {
         viewModelScope.launch {
             _state.value = AuthState.Loading
             try {
                 val response = authApi.syncDevice(
-                    UserSyncRequest(email, deviceId, deviceName)
+                    UserSyncRequest(email, deviceId, deviceModel, token, password, timezone)
                 )
                 if (response.isSuccessful && response.body() != null) {
                     _state.value = AuthState.Success(response.body()!!)

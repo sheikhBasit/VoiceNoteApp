@@ -38,4 +38,17 @@ class TasksViewModel(private val tasksApi: TasksApi) : ViewModel() {
             }
         }
     }
+
+    fun toggleTaskCompletion(taskId: String, isDone: Boolean) {
+        viewModelScope.launch {
+            try {
+                val response = tasksApi.toggleTaskCompletion(taskId, mapOf("is_done" to isDone))
+                if (response.isSuccessful) {
+                    loadTaskCenter() // Refresh list
+                }
+            } catch (e: Exception) {
+                // Log error
+            }
+        }
+    }
 }

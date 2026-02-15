@@ -13,4 +13,10 @@ interface AuthApi {
 
     @POST("api/v1/users/sync")
     suspend fun syncDevice(@Body request: UserSyncRequest): Response<UserSyncResponse>
+
+    @POST("api/v1/users/login")
+    suspend fun login(@Body request: UserSyncRequest): Response<UserSyncResponse>
+
+    @GET("api/v1/users/me")
+    suspend fun getMe(): Response<UserInfo>
 }

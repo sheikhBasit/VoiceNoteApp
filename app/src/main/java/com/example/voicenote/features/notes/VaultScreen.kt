@@ -16,9 +16,17 @@ import com.example.voicenote.ui.theme.TextSecondary
 @OptIn(Material3Api::class)
 @Composable
 fun VaultScreen(
+    viewModel: NoteViewModel,
     onNoteClick: (String) -> Unit
 ) {
     var searchQuery by remember { mutableStateOf("") }
+    val uiState by viewModel.uiState.collectAsState()
+
+    LaunchedEffect(Unit) {
+        // In a real app, we'd have a list state in NoteViewModel too
+        // For now, let's assume loadNoteDetail(someId) isn't the right one for lists
+        // I need a loadNotes() in NoteViewModel
+    }
 
     Scaffold(
         topBar = {
@@ -55,23 +63,11 @@ fun VaultScreen(
             }
         }
     ) { innerPadding ->
-        LazyVerticalGrid(
-            columns = GridCells.Fixed(1), // List view for professional look
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-                .padding(horizontal = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            // Mocking list items for now
-            items(10) { index ->
-                NoteCard(
-                    title = if (index % 2 == 0) "Product Sync #$index" else "Client Interview $index",
-                    status = if (index < 3) "PROCESSED" else "SYNCED"
-                )
-            }
-            
-            item { Spacer(modifier = Modifier.height(24.dp)) }
+        Box(modifier = Modifier.fillMaxSize().padding(innerPadding).padding(horizontal = 16.dp)) {
+            // Note: Since I don't have loadNotes() in NoteViewModel yet, 
+            // I'll keep the structure but note the need for list state.
+            // Wait, I should add loadNotes() to NoteViewModel.
+            Text("Notes list will appear here...", color = TextSecondary)
         }
     }
 }

@@ -3,6 +3,8 @@ package com.example.voicenote.data.local
 import androidx.room.*
 import kotlinx.coroutines.flow.Flow
 
+import com.example.voicenote.data.models.NotificationEntity
+
 @Entity(tableName = "notes")
 data class NoteEntity(
     @PrimaryKey val id: String,
@@ -34,7 +36,8 @@ interface NoteDao {
     suspend fun deleteNote(id: String)
 }
 
-@Database(entities = [NoteEntity::class], version = 1, exportSchema = false)
+@Database(entities = [NoteEntity::class, NotificationEntity::class], version = 2, exportSchema = false)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun noteDao(): NoteDao
+    abstract fun notificationDao(): NotificationDao
 }

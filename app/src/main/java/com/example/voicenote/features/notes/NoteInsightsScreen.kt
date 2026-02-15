@@ -19,7 +19,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.voicenote.data.models.Conflict
 import com.example.voicenote.data.models.NoteDetailResponse
-import com.example.voicenote.data.models.TranscriptSegment
+import com.example.voicenote.data.models.NoteTask
 import com.example.voicenote.ui.components.GlassCard
 import com.example.voicenote.ui.theme.AlertOrange
 import com.example.voicenote.ui.theme.PrimaryBlue
@@ -106,20 +106,38 @@ fun NoteInsightsContent(note: NoteDetailResponse) {
             }
         }
 
-        // 4. AI Key Points (Carousel)
+        // 4. Semantic Insights
         item {
-            Text("Key Points", style = MaterialTheme.typography.titleLarge, color = Color.White)
+            Text("AI Insights", style = MaterialTheme.typography.titleLarge, color = Color.White)
             Spacer(modifier = Modifier.height(12.dp))
-            KeyPointsCarousel(note.keyPoints)
+            note.semanticAnalysis?.let { analysis ->
+                SemanticInsightsRow(analysis)
+            }
         }
 
-        // 5. Transcript Section
+        // 5. Action Items (Tasks)
+        if (!note.tasks.isNullOrEmpty()) {
+            item {
+                Text("Action Items", style = MaterialTheme.typography.titleLarge, color = Color.White)
+                Spacer(modifier = Modifier.height(12.dp))
+            }
+            items(note.tasks) { task ->
+                TaskCard(task)
+            }
+        }
+
+        // 6. Transcript Section
         item {
-            Text("Transcript", style = MaterialTheme.typography.titleLarge, color = Color.White)
-        }
-
-        items(note.transcript) { segment ->
-            TranscriptSegmentRow(segment)
+            Text("Full Transcript", style = MaterialTheme.typography.titleLarge, color = Color.White)
+            Spacer(modifier = Modifier.height(12.dp))
+            GlassCard(modifier = Modifier.fillMaxWidth()) {
+                Text(
+                    note.transcript,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Color.White.copy(alpha = 0.8f),
+                    modifier = Modifier.padding(16.dp)
+                )
+            }
         }
 
         item { Spacer(modifier = Modifier.height(100.dp)) }
@@ -154,65 +172,64 @@ fun ConflictBanner(conflict: Conflict) {
 }
 
 @Composable
-fun KeyPointsCarousel(keyPoints: com.example.voicenote.data.models.KeyPoints) {
+fun SemanticInsightsRow(analysis: com.example.voicenote.data.models.NoteSemanticAnalysis) {
     LazyRow(
         horizontalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        items(keyPoints.actionItems) { item ->
-            KeyPointCard("Action Item", "✅", item, Color(0xFF49CC90))
+        item {
+            SentimentCard(analysis.sentiment, analysis.emotionalTone)
         }
-        items(keyPoints.decisions) { item ->
-            KeyPointCard("Decision", "🎯", item, Color(0xFFFCA130))
-        }
-        items(keyPoints.insights) { item ->
-            KeyPointCard("Insight", "💡", item, PrimaryBlue)
+        items(analysis.keyInsights) { insight ->
+            InsightCard(insight)
         }
     }
 }
 
 @Composable
-fun KeyPointCard(type: String, icon: String, text: String, color: Color) {
+fun SentimentCard(sentiment: String, tone: String) {
+    GlassCard(modifier = Modifier.width(200.dp).height(100.dp)) {
+        Column(modifier = Modifier.padding(12.dp)) {
+            Text("Sentiment", style = MaterialTheme.typography.labelMedium, color = PrimaryBlue)
+            Text(sentiment, style = MaterialTheme.typography.titleMedium, color = Color.White)
+            Text(tone, style = MaterialTheme.typography.bodySmall, color = TextSecondary)
+        }
+    }
+}
+
+@Composable
+fun InsightCard(insight: String) {
+    GlassCard(modifier = Modifier.width(240.dp).height(100.dp)) {
+        Column(modifier = Modifier.padding(12.dp)) {
+            Text("Insight", style = MaterialTheme.typography.labelMedium, color = Color(0xFF49CC90))
+            Text(insight, style = MaterialTheme.typography.bodyMedium, color = Color.White, maxLines = 3)
+        }
+    }
+}
+
+@Composable
+fun TaskCard(task: NoteTask) {
     GlassCard(
-        modifier = Modifier
-            .width(280.dp)
-            .height(120.dp)
+        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+        cornerRadius = 8.dp
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(icon, fontSize = 16.sp)
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(type, style = MaterialTheme.typography.labelMedium, color = color)
+        Row(
+            modifier = Modifier.padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            val color = when(task.priority) {
+                "CRITICAL" -> Color.Red
+                "HIGH" -> AlertOrange
+                else -> PrimaryBlue
             }
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(text, style = MaterialTheme.typography.bodyMedium, color = Color.White, maxLines = 3)
-        }
-    }
-}
-
-@Composable
-fun TranscriptSegmentRow(segment: TranscriptSegment) {
-    Column(modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Surface(
-                modifier = Modifier.size(24.dp),
-                shape = CircleShape,
-                color = if (segment.speaker == "Speaker 1") PrimaryBlue else Color.Gray
-            ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Text(segment.speaker?.lastOrNull()?.toString() ?: "?", fontSize = 12.sp, color = Color.White)
+            Surface(modifier = Modifier.size(12.dp), shape = CircleShape, color = color) {}
+            Spacer(modifier = Modifier.width(16.dp))
+            Column {
+                Text(task.description, style = MaterialTheme.typography.bodyLarge, color = Color.White)
+                if (task.title != null) {
+                    Text(task.title, style = MaterialTheme.typography.bodySmall, color = TextSecondary)
                 }
             }
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(segment.speaker ?: "Unknown", style = MaterialTheme.typography.labelMedium, color = TextSecondary)
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(formatTime(segment.start), style = MaterialTheme.typography.labelSmall, color = TextSecondary.copy(alpha = 0.5f))
         }
-        Text(
-            segment.text,
-            style = MaterialTheme.typography.bodyMedium,
-            color = Color.White,
-            modifier = Modifier.padding(top = 4.dp, start = 32.dp)
-        )
     }
 }
 

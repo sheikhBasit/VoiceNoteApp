@@ -46,7 +46,7 @@ class DashboardViewModel(
 
     private fun startSseConnection() {
         sseManager.connect(
-            "http://4.240.96.60:8000/sse/events",
+            "${com.example.voicenote.core.network.NetworkModule.BASE_URL}sse/events",
             object : com.example.voicenote.core.network.SSEManager.SSEListener {
                 override fun onOpen() {
                     println("SSE Connected")

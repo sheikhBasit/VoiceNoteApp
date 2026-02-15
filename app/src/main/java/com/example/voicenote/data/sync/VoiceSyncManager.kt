@@ -12,7 +12,29 @@ class VoiceSyncManager(
     private val syncApi: SyncApi,
     private val noteDao: NoteDao
 ) {
-    suspend fun syncPendingNotes(files: List<File>) {
+        try {
+            val response = syncApi.uploadBatch(parts)
+            if (response.isSuccessful && response.body() != null) {
+                // Mark notes as synced in local DB
+                notes.forEach { note ->
+                    noteDao.updateNote(note.copy(isSynced = true))
+                }
+            }
+        } catch (e: Exception) {
+            // Handle error, retry later
+        }
+    }
+
+    suspend fun syncPendingNotesFromDb() {
+        noteDao.getPendingNotes().collect { pendingNotes ->
+            if (pendingNotes.isNotEmpty()) {
+                val files = pendingNotes.mapNotNull { it.localAudioPath?.let { path -> File(path) } }
+                syncPendingNotes(files, pendingNotes)
+            }
+        }
+    }
+
+    private suspend fun syncPendingNotes(files: List<File>, notes: List<NoteEntity>) {
         if (files.isEmpty()) return
 
         val parts = files.map { file ->
@@ -23,10 +45,18 @@ class VoiceSyncManager(
         try {
             val response = syncApi.uploadBatch(parts)
             if (response.isSuccessful) {
-                // Mark notes as synced in local DB or delete temporary files
+                notes.forEach { note ->
+                    noteDao.updateNote(note.copy(isSynced = true))
+                }
             }
         } catch (e: Exception) {
-            // Handle error, retry later
+            // Log error
         }
     }
 }
+
+data class BatchResponse(
+    val status: String,
+    val batch_job_id: String,
+    val processed_count: Int
+)
