@@ -12,10 +12,19 @@
 #   public *;
 #}
 
-# Uncomment this to preserve the line number information for
-# debugging stack traces.
-#-keepattributes SourceFile,LineNumberTable
+# Preservation for GSON / Retrofit Models
+-keep class com.abstudio.voicenote.data.models.** { *; }
 
-# If you keep the line number information, uncomment this to
-# hide the original source file name.
-#-renamesourcefileattribute SourceFile
+# Firebase Messaging
+-keep class com.google.firebase.** { *; }
+
+# Hilt
+-keep class androidx.hilt.** { *; }
+-keep class com.google.dagger.** { *; }
+
+# Room
+-keep class androidx.room.** { *; }
+
+# Keep line numbers for Crashlytics/Debugging
+-keepattributes SourceFile,LineNumberTable
+-renamesourcefileattribute SourceFile
